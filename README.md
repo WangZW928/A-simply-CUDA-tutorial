@@ -2,7 +2,7 @@
 
 ## Overview：这个目录是什么
 
-`Projects/HPC_matters/CUDA/` 是一组面向 CUDA 性能理解的实验项目。其目的是为了持续建立这条链路：
+本仓库是一组面向 CUDA 性能理解的实验项目。其目的是为了持续建立这条链路：
 
 ```text
 代码写法 -> GPU 硬件行为 -> 可测量的性能结果 -> profiler 证据
