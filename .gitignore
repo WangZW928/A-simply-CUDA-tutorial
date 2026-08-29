@@ -7,6 +7,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+__pycache__/
+*.py[cod]
 *.o
 *.a
 *.so
@@ -19,4 +21,3 @@ Makefile
 *.gpu
 *.stub.c
 *.module_id
-
