@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Shared Memory Bank Conflict</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+  .container { max-width: 1100px; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; color: #f0f0f0; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+
+  .section { margin-bottom: 36px; }
+  .section-title { font-size: 15px; font-weight: 600; color: #aaa; margin-bottom: 14px; padding-left: 6px; border-left: 3px solid #555; }
+
+  /* Bank Grid */
+  .bank-grid { display: flex; gap: 4px; flex-wrap: wrap; }
+  .bank-cell {
+    width: 28px; height: 28px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600;
+    background: #2a2a3e; color: #777;
+    border: 1px solid #3a3a4e;
+  }
+
+  /* Demo Row */
+  .demo-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .demo-card {
+    background: #222236; border-radius: 8px; padding: 18px 20px;
+    border: 1px solid #333;
+    min-width: 340px; flex: 1;
+  }
+  .demo-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .demo-card .sub { font-size: 12px; color: #888; margin-bottom: 14px; }
+
+  /* Thread→Bank Viz */
+  .mapping { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+  .map-row { display: flex; align-items: center; gap: 8px; font-size: 10px; }
+  .map-row .thread-label { width: 44px; text-align: right; color: #999; font-family: monospace; }
+  .map-row .arrow { width: 24px; text-align: center; color: #555; }
+  .bank-box {
+    height: 14px; border-radius: 2px; display: flex; align-items: center;
+    padding: 0 4px; font-size: 8px; font-weight: 700; min-width: 14px;
+  }
+  .bank-box.good { background: #1a4a2e; color: #4ade80; }
+  .bank-box.bad { background: #4a1a2e; color: #f87171; }
+
+  .stat-row { display: flex; justify-content: space-between; font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
+  .stat-label { color: #888; }
+  .stat-good { color: #4ade80; font-weight: 600; }
+  .stat-bad { color: #f87171; font-weight: 600; }
+
+  /* Timeline */
+  .timeline { display: flex; gap: 2px; margin-top: 10px; }
+  .timeline .cycle {
+    flex: 1; height: 18px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700;
+  }
+  .timeline .cycle.g { background: #1a4a2e; color: #4ade80; }
+  .timeline .cycle.r { background: #4a1a2e; color: #f87171; }
+
+  /* Formula */
+  .formula {
+    background: #1e1e32; border-radius: 6px; padding: 14px 18px;
+    font-family: 'Courier New', monospace; font-size: 12px;
+    line-height: 1.8; color: #c0c0c0;
+    margin-top: 12px;
+    border: 1px solid #333;
+  }
+  .formula .hl { color: #4ade80; }
+  .formula .hr { color: #f87171; }
+
+  .note {
+    font-size: 12px; color: #777; margin-top: 20px;
+    line-height: 1.6; border-left: 2px solid #444; padding-left: 12px;
+  }
+
+  .legend { display: flex; gap: 20px; margin-bottom: 18px; font-size: 11px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-dot.g { background: #1a4a2e; border: 1px solid #4ade80; }
+  .legend-dot.r { background: #4a1a2e; border: 1px solid #f87171; }
+  .legend-dot.n { background: #2a2a3e; border: 1px solid #3a3a4e; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>GPU Shared Memory Bank Conflict</h1>
+  <p class="subtitle">RTX 4060  ·  SM 8.9  ·  32 banks × 4 bytes</p>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot n"></div> Bank</div>
+    <div class="legend-item"><div class="legend-dot g"></div> 1 线程 / 1 cycle</div>
+    <div class="legend-item"><div class="legend-dot r"></div> N 线程排队 / N cycles</div>
+  </div>
+
+  <!-- SECTION 1: What is a bank -->
+  <div class="section">
+    <div class="section-title">1. Shared Memory 被分成 32 个 Bank</div>
+    <p style="font-size:12px;color:#888;margin-bottom:12px;">
+      每个 bank 宽度 4 字节（一个 float）。地址 <code style="color:#aaa">smem[i]</code> 落入 bank <code style="color:#aaa">i % 32</code>。
+      一个 warp 32 个线程，每个 cycle 每个 bank 只能服务一个线程。
+    </p>
+    <div class="bank-grid">
+      <!-- Banks 0-31 -->
+      <div class="bank-cell" style="background:#2a3a4e;color:#60a5fa;font-size:10px">B0</div>
+      <div class="bank-cell">1</div><div class="bank-cell">2</div><div class="bank-cell">3</div>
+      <div class="bank-cell">4</div><div class="bank-cell">5</div><div class="bank-cell">6</div><div class="bank-cell">7</div>
+      <div class="bank-cell">8</div><div class="bank-cell">9</div><div class="bank-cell">10</div><div class="bank-cell">11</div>
+      <div class="bank-cell">12</div><div class="bank-cell">13</div><div class="bank-cell">14</div><div class="bank-cell">15</div>
+      <div class="bank-cell">16</div><div class="bank-cell">17</div><div class="bank-cell">18</div><div class="bank-cell">19</div>
+      <div class="bank-cell">20</div><div class="bank-cell">21</div><div class="bank-cell">22</div><div class="bank-cell">23</div>
+      <div class="bank-cell">24</div><div class="bank-cell">25</div><div class="bank-cell">26</div><div class="bank-cell">27</div>
+      <div class="bank-cell">28</div><div class="bank-cell">29</div><div class="bank-cell">30</div>
+      <div class="bank-cell" style="background:#2a3a4e;color:#60a5fa;font-size:10px">B31</div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Two scenarios -->
+  <div class="section">
+    <div class="section-title">2. Stride=1 vs Stride=32：同一个 kernel，天壤之别</div>
+    <div class="demo-row">
+
+      <!-- STRIDE = 1 -->
+      <div class="demo-card" style="border-left:3px solid #4ade80">
+        <h3 style="color:#4ade80">✦ Stride = 1 无冲突</h3>
+        <p class="sub">32 threads → 32 different banks → parallel</p>
+        <div class="mapping">
+          <!-- Show first 4 threads and last 2 -->
+          <div class="map-row">
+            <span class="thread-label">T0</span><span class="arrow">→</span>
+            <span class="bank-box good">B0</span><span style="font-size:9px;color:#666">smem[0]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T1</span><span class="arrow">→</span>
+            <span class="bank-box good">B1</span><span style="font-size:9px;color:#666">smem[1]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T2</span><span class="arrow">→</span>
+            <span class="bank-box good">B2</span><span style="font-size:9px;color:#666">smem[2]</span>
+          </div>
+          <div style="font-size:10px;color:#555;text-align:center;margin:2px 0">⋯</div>
+          <div class="map-row">
+            <span class="thread-label">T30</span><span class="arrow">→</span>
+            <span class="bank-box good">B30</span><span style="font-size:9px;color:#666">smem[30]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T31</span><span class="arrow">→</span>
+            <span class="bank-box good">B31</span><span style="font-size:9px;color:#666">smem[31]</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">每个 bank 被几个线程访问</span>
+          <span class="stat-good">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">完成 32 次 load 需要</span>
+          <span class="stat-good">1 cycle ✓</span>
+        </div>
+        <div style="margin-top:10px">
+          <span style="font-size:10px;color:#888">执行时间线：</span>
+          <div class="timeline">
+            <div class="cycle g">T0..31 ✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STRIDE = 32 -->
+      <div class="demo-card" style="border-left:3px solid #f87171">
+        <h3 style="color:#f87171">✦ Stride = 32 全冲突</h3>
+        <p class="sub">32 threads → same bank → 32× serialized</p>
+        <div class="mapping">
+          <div class="map-row">
+            <span class="thread-label">T0</span><span class="arrow">→</span>
+            <span class="bank-box bad">B0</span><span style="font-size:9px;color:#666">smem[0]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T1</span><span class="arrow">→</span>
+            <span class="bank-box bad">B0</span><span style="font-size:9px;color:#666">smem[32]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T2</span><span class="arrow">→</span>
+            <span class="bank-box bad">B0</span><span style="font-size:9px;color:#666">smem[64]</span>
+          </div>
+          <div style="font-size:10px;color:#555;text-align:center;margin:2px 0">⋯</div>
+          <div class="map-row">
+            <span class="thread-label">T30</span><span class="arrow">→</span>
+            <span class="bank-box bad">B0</span><span style="font-size:9px;color:#666">smem[960]</span>
+          </div>
+          <div class="map-row">
+            <span class="thread-label">T31</span><span class="arrow">→</span>
+            <span class="bank-box bad">B0</span><span style="font-size:9px;color:#666">smem[992]</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">每个 bank 被几个线程访问</span>
+          <span class="stat-bad">32（全堆在 B0）</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">完成 32 次 load 需要</span>
+          <span class="stat-bad">32 cycles ✗</span>
+        </div>
+        <div style="margin-top:10px">
+          <span style="font-size:10px;color:#888">执行时间线：</span>
+          <div class="timeline">
+            <div class="cycle r">T0</div><div class="cycle r">T1</div><div class="cycle r">T2</div>
+            <div class="cycle r" style="background:#3a1a2e;color:#999;font-size:7px">⋯</div>
+            <div class="cycle r">T31</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: Formula -->
+  <div class="section">
+    <div class="section-title">3. 冲突度公式</div>
+    <div class="formula">
+      <div>thread_addr = <span class="hl">lane_id</span> × <span class="hr">stride</span></div>
+      <div>bank_id = thread_addr <span style="color:#60a5fa">% 32</span></div>
+      <div style="margin-top:6px">conflict_degree = <span style="color:#60a5fa">gcd</span>(stride, 32)</div>
+      <div style="margin-top:4px;font-size:11px;color:#888">
+        stride=1 → gcd(1,32)=<span class="hl">1</span> 无冲突<br>
+        stride=2 → gcd(2,32)=<span class="hl">2</span> 2-way 冲突<br>
+        stride=4 → gcd(4,32)=<span class="hl">4</span> 4-way 冲突<br>
+        stride=32 → gcd(32,32)=<span class="hr">32</span> 全冲突<br>
+        stride=3 → gcd(3,32)=<span class="hl">1</span> 无冲突 ✦
+      </div>
+    </div>
+    <p style="font-size:11px;color:#666;margin-top:8px;line-height:1.5">
+      <strong style="color:#aaa">关键洞察：</strong>stride=3 虽然跳跃访问，但因为 3 和 32 互质，每个线程仍然落到不同的 bank。
+      这就是为什么 <code style="color:#aaa">bank_id = (lane × stride) % 32</code> 比直觉更微妙。
+    </p>
+  </div>
+
+  <!-- SECTION 4: The volatile trick -->
+  <div class="section">
+    <div class="section-title">4. 为什么这个实验必须用 volatile？</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div class="formula" style="flex:1">
+        <div style="color:#f87171;font-size:11px;margin-bottom:6px">❌ 不用 volatile（编译器优化后）</div>
+        <div style="color:#c0c0c0">
+          <span style="color:#666">// 原始代码</span><br>
+          acc += smem[index];<br><br>
+          <span style="color:#666">// 编译器识别出 smem[index] 在循环中不变</span><br>
+          <span style="color:#666">// → 把 load 提升到循环外：</span><br>
+          <span style="color:#888">float tmp = smem[index];</span><br>
+          <span style="color:#888">for (...) acc += tmp;  // 全是寄存器操作</span><br><br>
+          <span style="color:#f87171">→ 测到的不是 bank conflict，</span><br>
+          <span style="color:#f87171">  是寄存器加法速度</span>
+        </div>
+      </div>
+      <div class="formula" style="flex:1">
+        <div style="color:#4ade80;font-size:11px;margin-bottom:6px">✅ 用 volatile（真实测量）</div>
+        <div style="color:#c0c0c0">
+          <span style="color:#666">// 修正代码</span><br>
+          <span style="color:#60a5fa">volatile</span> <span style="color:#888">float* vsmem = smem;</span><br>
+          acc += vsmem[index];<br><br>
+          <span style="color:#666">// volatile 告诉编译器：</span><br>
+          <span style="color:#666">// "每次循环都必须重新从内存读取"</span><br>
+          <span style="color:#666">// 不允许提升、不允许缓存</span><br><br>
+          <span style="color:#4ade80">→ 每次迭代真的走 shared memory</span><br>
+          <span style="color:#4ade80">→ bank conflict 现象被观测到</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    <strong style="color:#aaa">一句话总结</strong><br>
+    Shared memory 是 32 条"通道"（bank），每个 cycle 每条通道只能过一个人。
+    如果 32 个线程各走各的通道 → 并行通过。
+    如果全挤一条通道 → 排队 32 次。<br>
+    而 <code>volatile</code> 的角色是：不让编译器偷偷把"走路"换成"抄答案"。
+  </p>
+
+</div>
+</body>
+</html>

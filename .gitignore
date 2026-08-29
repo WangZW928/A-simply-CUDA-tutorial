@@ -1,0 +1,22 @@
+# Local CUDA/CMake build products
+build/
+build_asm/
+build_verify/
+build_sweep/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.a
+*.so
+*.exe
+
+# Local profiler/compiler by-products
+*.cubin
+*.fatbin
+*.ii
+*.gpu
+*.stub.c
+*.module_id
+

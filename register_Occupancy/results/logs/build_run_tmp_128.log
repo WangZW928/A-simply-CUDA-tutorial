@@ -1,0 +1,29 @@
+[sweep] ===== HIGH_REG_TMP_SIZE=128 =====
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 12.6.20
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda-12.6/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Configuring done (5.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/wangz/MyProject/HPC_matters/CUDA/register_Occupancy/build_sweep/tmp_128
+[ 33%] Building CUDA object CMakeFiles/reg_occ_bench.dir/src/reg_occ_bench.cu.o
+[ 66%] Linking CUDA device code CMakeFiles/reg_occ_bench.dir/cmake_device_link.o
+[100%] Linking CUDA executable reg_occ_bench
+[100%] Built target reg_occ_bench
+Device: NVIDIA GeForce RTX 4060 Laptop GPU
+SM count: 24
+Max warps/SM: 48
+HIGH_REG_TMP_SIZE: 128
+
+[low_reg] regs/thread=10, occ=100.00%, avg=0.0148 ms, elems/ms=3326115.2073, std=0.0091 ms
+[high_reg] regs/thread=168, occ=16.67%, avg=0.3039 ms, elems/ms=161722.5102, std=0.0020 ms
+
+Saved CSV: /home/wangz/MyProject/HPC_matters/CUDA/register_Occupancy/results/reg_occ_tmp_128.csv

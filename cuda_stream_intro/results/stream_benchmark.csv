@@ -1,0 +1,3 @@
+device_name,chunk_elems,repeats,warmup,iters,async_engine_count,mode,mean_ms
+"NVIDIA GeForce RTX 4060 Laptop GPU",1048576,30,5,512,1,default,3.36068
+"NVIDIA GeForce RTX 4060 Laptop GPU",1048576,30,5,512,1,two_streams,2.73508

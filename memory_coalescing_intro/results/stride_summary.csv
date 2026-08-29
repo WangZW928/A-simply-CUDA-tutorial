@@ -1,0 +1,7 @@
+device_name,sm_count,experiment,param_name,param_value,elements,repeats,warmup,mean_ms,std_ms,requested_bytes,requested_bandwidth_gb_s,relative_to_stride1
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,1,1048576,50,10,0.033293,0.028019,8388608.0,251.96463,1.0
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,2,1048576,50,10,0.014959,0.000657,8388608.0,560.783809,2.225644960564505
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,4,1048576,50,10,0.017677,0.000567,8388608.0,474.537485,1.8833495995052956
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,8,1048576,50,10,0.161139,0.006744,8388608.0,52.058147,0.20660894745425182
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,16,1048576,50,10,0.162884,0.0074,8388608.0,51.500555,0.20439597018041777
+NVIDIA GeForce RTX 4060 Laptop GPU,24,stride_sweep,stride,32,1048576,50,10,0.16586,0.008861,8388608.0,50.576292,0.200727745001352
