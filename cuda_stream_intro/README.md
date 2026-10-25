@@ -2,6 +2,8 @@
 
 前置实验：[CUDA 基础](../cuda_basics_intro/README.md) 先解释编译、错误检查、显式内存/Unified Memory 和单 stream event 计时。本章在此基础上学习 pinned memory 与多 stream；Managed Memory 和 pinned host memory 是不同的内存管理方式。
 
+如果还不熟悉两个输入上传、kernel 运算和结果回读，可先阅读 [Vector Add](../vector_add_intro/README.md) 的单次完整数据流，再学习本章的分块与异步组织。
+
 这个项目用一个最小实验说明 `cudaStream` 是干什么的，以及它最基本的使用方式。
 
 ## 1. `cudaStream` 是什么
