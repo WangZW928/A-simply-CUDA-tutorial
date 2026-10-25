@@ -136,6 +136,7 @@ Managed 模式的 event 区间可能包含迁移或缺页等成本，也可能�
 ## 7. 接下来如何进入已有实验
 
 - [Vector Add](../vector_add_intro/README.md)：本节的 `a[i] = i` 不需要上传输入；这个可选示例补齐两个 CPU 输入经 H2D、GPU 运算、D2H 到 CPU 校验的完整流程，不增加计时实验。
+- [Matrix Mul](../matrix_mul_intro/README.md)：Vector Add 之后的可选练习，用二维线程与共享内存分块计算矩阵乘法，理解非整块尺寸的边界处理。
 - [CUDA Stream](../cuda_stream_intro/README.md)：把显式内存流程扩展成 pinned memory + 异步拷贝 + 多队列。多个 stream 的计时必须等待所有相关分支完成，不能直接照搬这里的单 stream event 对。
 - [Memory Coalescing](../memory_coalescing_intro/README.md)：本节相邻线程写相邻 `int`；下一步改变 stride/offset，观察访问合并。该章 `mean_ms` 的工作量与本节不同，不能直接横向比数字。
 - [Nsight Systems](../nsight_systems_intro/README.md)：观察 API、等待和数据移动的时间位置；先确定测量包含什么，再谈 overlap。

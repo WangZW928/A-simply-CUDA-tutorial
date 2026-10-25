@@ -16,13 +16,15 @@
 - `scripts/plot_results.py`：画图和汇总
 - `README.md`：解释概念、运行方式和结果解读
 
-本指南包含一个[基础准备实验](./cuda_basics_intro/README.md)、一个可选的 [Vector Add 数据流示例](./vector_add_intro/README.md)，以及原有的 12 个核心学习项目：`cuda_stream_intro`、`cuda_graph_intro`、`memory_coalescing_intro`、`shared_memory_bank_conflict`、`register_Occupancy`（基础版 / Legacy）、`occupancy_vs_registers`、`warp_schedule`、`nsight_systems_intro`、`nsight_compute_intro`、`reduction_scan_intro`、`kernel_type_playground`、`nccl_intro`。Vector Add 仅用于学习，不输出 benchmark 数据。
+本指南包含一个[基础准备实验](./cuda_basics_intro/README.md)、两个可选练习（[Vector Add 数据流](./vector_add_intro/README.md)、[Matrix Mul 二维索引与共享内存](./matrix_mul_intro/README.md)），以及原有的 12 个核心学习项目：`cuda_stream_intro`、`cuda_graph_intro`、`memory_coalescing_intro`、`shared_memory_bank_conflict`、`register_Occupancy`（基础版 / Legacy）、`occupancy_vs_registers`、`warp_schedule`、`nsight_systems_intro`、`nsight_compute_intro`、`reduction_scan_intro`、`kernel_type_playground`、`nccl_intro`。两个可选练习仅用于学习，不输出 benchmark 数据。
 
 ## 学习顺序
 
 首次接触 CUDA，先完成 [`cuda_basics_intro`](./cuda_basics_intro/README.md)：编译第一个 kernel、检查边界与错误、比较显式内存和 Unified Memory，并区分 event 时间与 CPU 端到端时间。只需一张 GPU；熟悉这些基础后按下面的性能实验顺序继续。该章整合了 CSC 2017 课程中的基础练习，来源与许可见其[说明](./cuda_basics_intro/README.md#8-来源与改编范围)。
 
 进入 Stream 前，可用 [`vector_add_intro`](./vector_add_intro/README.md) 补齐基础章没有用到的 H2D 输入拷贝：从两个 CPU 输入走到 GPU 加法、D2H 回读和 CPU 校验。它只改编 NVIDIA CUDA Samples 的一个入门示例，[来源与许可](./vector_add_intro/README.md#5-来源与改编范围)单独保留；已熟悉完整数据流可跳过。
+
+随后可选学 [`matrix_mul_intro`](./matrix_mul_intro/README.md)：从 `C = A × B` 的行主序索引走到二维 grid/block、沿 K 累加与 shared memory 分块复用，用非整块尺寸理解边界补零，并对照 CPU 校验。它是学习材料，不是最快或通用 GEMM；[来源与许可](./matrix_mul_intro/README.md#6-来源与改编范围)记录 NVIDIA sample 经用户 fork 引入的固定快照。完成或跳过后继续下面的原有课程顺序。
 
 1. [`cuda_stream_intro`](./cuda_stream_intro/README.md)：理解 GPU 工作队列和异步拷贝
 2. [`cuda_graph_intro`](./cuda_graph_intro/README.md)：理解固定工作流的 launch 开销优化

@@ -52,6 +52,7 @@ cmake --build build -j
 ## 4. 接下来学什么
 
 - [CUDA 基础](../cuda_basics_intro/README.md)：回顾显式内存与 Unified Memory，以及两种计时范围。
+- [Matrix Mul](../matrix_mul_intro/README.md)（可选）：沿用本例数据流，学习行主序矩阵乘法、二维线程、尾块边界与共享内存复用，再进入 Stream。
 - [CUDA Stream](../cuda_stream_intro/README.md)：将本例的完整拷贝流程扩展为 pinned memory、分块和多队列。
 - [Memory Coalescing](../memory_coalescing_intro/README.md)：从相邻线程访问相邻元素，走向 stride/offset 实验。
 - [返回学习导航](../README.md#学习顺序)。
