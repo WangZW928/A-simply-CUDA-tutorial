@@ -1,5 +1,7 @@
 # Memory Coalescing Intro
 
+前置实验：[CUDA 基础](../cuda_basics_intro/README.md) 用连续索引写入数组并逐元素校验。本章再改变 stride/offset，研究 warp 内访问模式；请先分清 kernel event 区间与包含结果回读的 CPU 计时。
+
 这个项目用最小实验尝试说明 CUDA 里的 **global memory coalescing** 是什么，以及为什么 warp 内的访问模式会直接影响全局内存带宽。
 
 ## 1. 什么是 memory coalescing

@@ -16,9 +16,11 @@
 - `scripts/plot_results.py`：画图和汇总
 - `README.md`：解释概念、运行方式和结果解读
 
-本指南覆盖 12 个核心学习项目：`cuda_stream_intro`、`cuda_graph_intro`、`memory_coalescing_intro`、`shared_memory_bank_conflict`、`register_Occupancy`（基础版 / Legacy）、`occupancy_vs_registers`、`warp_schedule`、`nsight_systems_intro`、`nsight_compute_intro`、`reduction_scan_intro`、`kernel_type_playground`、`nccl_intro`。
+本指南包含一个[基础准备实验](./cuda_basics_intro/README.md)，以及原有的 12 个核心学习项目：`cuda_stream_intro`、`cuda_graph_intro`、`memory_coalescing_intro`、`shared_memory_bank_conflict`、`register_Occupancy`（基础版 / Legacy）、`occupancy_vs_registers`、`warp_schedule`、`nsight_systems_intro`、`nsight_compute_intro`、`reduction_scan_intro`、`kernel_type_playground`、`nccl_intro`。
 
 ## 学习顺序
+
+首次接触 CUDA，先完成 [`cuda_basics_intro`](./cuda_basics_intro/README.md)：编译第一个 kernel、检查边界与错误、比较显式内存和 Unified Memory，并区分 event 时间与 CPU 端到端时间。只需一张 GPU；熟悉这些基础后按下面的性能实验顺序继续。该章整合了 CSC 2017 课程中的基础练习，来源与许可见其[说明](./cuda_basics_intro/README.md#8-来源与改编范围)。
 
 1. [`cuda_stream_intro`](./cuda_stream_intro/README.md)：理解 GPU 工作队列和异步拷贝
 2. [`cuda_graph_intro`](./cuda_graph_intro/README.md)：理解固定工作流的 launch 开销优化
@@ -32,6 +34,10 @@
 10. [`kernel_type_playground`](./kernel_type_playground/README.md)：按瓶颈类型选择优化策略
 11. [`reduction_scan_intro`](./reduction_scan_intro/README.md)：真实的并行算法sample
 12. [`nccl_intro`](./nccl_intro/README.md)：学习多 GPU 集合通信基础
+
+## 可选延伸：从 CUDA 编程走到 GPU 硬件架构
+
+如果想进一步看 block/thread 如何落到硬件上，可继续阅读[硬件架构学习桥接指南](./hardware_architecture_bridge.md)，并结合自己的 [tiny-gpu](https://github.com/WangZW928/tiny-gpu) 仓库观察一个教学型 GPU 的 RTL、ISA 与逐周期执行轨迹。建议先完成基础实验和 block/thread、访存章节；此延伸讨论的是硬件模型，不是 CUDA API 教程，也不是 NVIDIA GPU 的真实微架构复刻。
 
 ## 第一章：运行时机制 Runtime
 
@@ -451,7 +457,7 @@ float y = __shfl_down_sync(mask, x, offset);
 
 ### nvprof
 
-`nvprof` 和 Visual Profiler 已弃用，官方说明其将于未来 CUDA 版本移除；新平台和新项目应优先迁移到 Nsight Systems 与 Nsight Compute。[CUDA Profiler User’s Guide：Migrating to Nsight Tools](https://docs.nvidia.com/cuda/profiler-users-guide/#migrating-to-nsight-tools-from-visual-profiler-and-nvprof)
+`nvprof` 和 Visual Profiler 已在 CUDA 13.0 移除；新平台和新项目应使用 Nsight Systems 与 Nsight Compute。[CUDA 13.0 Release Notes](https://docs.nvidia.com/cuda/archive/13.0.0/cuda-toolkit-release-notes/index.html)
 
 历史命令（仅用于旧环境复现）：
 

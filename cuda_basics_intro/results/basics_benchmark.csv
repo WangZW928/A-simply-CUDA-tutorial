@@ -1,0 +1,3 @@
+mode,elements,block_size,repeats,warmup,mean_ms,std_ms,host_mean_ms,host_std_ms,valid
+explicit,1048579,256,20,3,0.011426,0.001506,0.832525,0.083987,1
+managed,1048579,256,20,3,0.567283,0.013100,0.984597,0.207154,1
